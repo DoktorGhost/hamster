@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генерация кодов</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+{{if .Keys}}
+<div id="keyContainer">
+    <h2>Сгенерированные ключи:</h2>
+    <ul>
+        {{range .Keys}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+</div>
+{{end}}
+
+</body>
+</html>
+

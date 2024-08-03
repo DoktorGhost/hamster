@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	appToken    = "d28721be-fd2d-4b45-869e-9f253b554e50"
-	promoID     = "43e35910-c168-4634-ad4f-52fd764a843f"
-	eventsDelay = 20000 // in milliseconds
+	appToken = "d28721be-fd2d-4b45-869e-9f253b554e50"
+	promoID  = "43e35910-c168-4634-ad4f-52fd764a843f"
 )
 
 type loginResponse struct {
@@ -32,6 +31,7 @@ type generateKeyResponse struct {
 	PromoCode string `json:"promoCode"`
 }
 
+// генерация
 func generateClientID() string {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	randomNumbers := randSeq(19)
@@ -47,6 +47,7 @@ func randSeq(n int) string {
 	return string(b)
 }
 
+// апи
 func login(clientID string) (string, error) {
 	url := "https://api.gamepromo.io/promo/login-client"
 	body := map[string]interface{}{
@@ -71,7 +72,7 @@ func emulateProgress(clientToken string) (bool, error) {
 	url := "https://api.gamepromo.io/promo/register-event"
 	body := map[string]interface{}{
 		"promoId":     promoID,
-		"eventId":     randSeq(36), // Assuming UUID generation is replaced by random sequence
+		"eventId":     randSeq(36),
 		"eventOrigin": "undefined",
 	}
 
@@ -87,6 +88,7 @@ func emulateProgress(clientToken string) (bool, error) {
 	return eventResp.HasCode, nil
 }
 
+// апи
 func generateKey(clientToken string) (string, error) {
 	url := "https://api.gamepromo.io/promo/create-code"
 	body := map[string]interface{}{
@@ -105,6 +107,7 @@ func generateKey(clientToken string) (string, error) {
 	return keyResp.PromoCode, nil
 }
 
+// апи
 func postRequest(url string, body interface{}) ([]byte, error) {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
@@ -120,6 +123,7 @@ func postRequest(url string, body interface{}) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+// апи
 func postRequestWithAuth(url string, body interface{}, token string) ([]byte, error) {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
@@ -143,8 +147,9 @@ func postRequestWithAuth(url string, body interface{}, token string) ([]byte, er
 	return io.ReadAll(resp.Body)
 }
 
+// хендлер
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "index.html")
+	http.ServeFile(w, r, "static/index.html")
 }
 
 func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
@@ -163,18 +168,16 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 
 	var wg sync.WaitGroup
 	keys := make([]string, 0, keyCount)
-	durations := make([]string, 0, keyCount)
-
+	startTime := time.Now()
 	for i := 0; i < keyCount; i++ {
 		wg.Add(1)
 
-		log.Printf("Старт приложения\n")
 		log.Printf("Запуск горутин. Количество: %d\n", keyCount)
 
 		go func(i int) {
 			defer wg.Done()
 
-			startTime := time.Now()
+			startTimeGo := time.Now()
 
 			clientID := generateClientID()
 			clientToken, err := login(clientID)
@@ -184,10 +187,8 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			hasCode := false
-			count := 0
 
 			for !hasCode {
-				count++
 				time.Sleep(2 * time.Second)
 
 				hasCode, err := emulateProgress(clientToken)
@@ -198,7 +199,7 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 				if hasCode {
 					break
 				}
-				duration := time.Since(startTime)
+				duration := time.Since(startTimeGo)
 				log.Printf("горутина %d работает %s\n", i+1, duration)
 			}
 
@@ -208,59 +209,36 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			duration := time.Since(startTime)
 			keys = append(keys, fmt.Sprintf("%s", promoCode))
-			durations = append(durations, fmt.Sprintf("Key %d: %v", i+1, duration))
 
 		}(i)
 
 	}
 
 	wg.Wait()
+	duration := time.Since(startTime)
+	log.Printf("Горутины отработали за %s \n", duration)
 
-	pageData := struct {
-		Keys      []string
-		Durations []string
-	}{
-		Keys:      keys,
-		Durations: durations,
+	// Читаем HTML-шаблон из файла
+	tmplPath := "static/results.html"
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		http.Error(w, "Unable to parse template", http.StatusInternalServerError)
+		return
 	}
 
-	tmpl := `
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-	    <meta charset="UTF-8">
-	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	    <title>Генерация кодов</title>
-	    <link rel="stylesheet" href="/static/css/styles.css">
-	</head>
-	<body>
+	// Выполняем шаблон и передаем данные
+	pageData := struct {
+		Keys []string
+	}{
+		Keys: keys,
+	}
 
-	{{if .Keys}}
-	<div id="keyContainer">
-	    <h2>Сгенерированные ключи:</h2>
-	    <ul>
-	        {{range .Keys}}
-	        <li>{{.}}</li>
-	        {{end}}
-	    </ul>
-	</div>
-	{{end}}
-
-	{{if .Durations}}
-	    <h3>Время генерации:</h3>
-	    <ul>
-	        {{range $index, $duration := .Durations}}
-	        <li>{{$duration}}</li>
-	        {{end}}
-	    </ul>
-	{{end}}
-	</body>
-	</html>`
-
-	t := template.Must(template.New("result").Parse(tmpl))
-	t.Execute(w, pageData)
+	err = tmpl.Execute(w, pageData)
+	if err != nil {
+		http.Error(w, "Unable to execute template", http.StatusInternalServerError)
+		return
+	}
 }
 func main() {
 	http.HandleFunc("/", indexHandler)

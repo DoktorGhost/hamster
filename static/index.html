@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генерация кодов</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/loading.css"> <!-- Подключение нового CSS-файла -->
+</head>
+<body>
+<h1>Генерация кодов</h1>
+<form id="keyForm" action="/generate_keys" method="post">
+    <div class="container1">
+        <label for="keyCount">Количество ключей:</label>
+        <select id="keyCount" name="keyCount">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+        <button type="submit">Начать</button>
+    </div>
+</form>
+
+<!-- Контейнер для анимации загрузки -->
+<div id="loadingContainer">
+    <div class="loader"></div>
+    <p>Идет генерация ключей. Пожалуйста, подождите...</p>
+</div>
+
+<script>
+    document.getElementById('keyForm').addEventListener('submit', function () {
+        // Показываем анимацию загрузки
+        document.getElementById('loadingContainer').style.display = 'block';
+    });
+</script>
+</body>
+</html>
