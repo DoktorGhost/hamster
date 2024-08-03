@@ -1,23 +1,22 @@
+/*
 package main
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
 
 const (
-	appToken    = "d28721be-fd2d-4b45-869e-9f253b554e50"
-	promoID     = "43e35910-c168-4634-ad4f-52fd764a843f"
-	eventsDelay = 20000 // in milliseconds
+	appToken = "d28721be-fd2d-4b45-869e-9f253b554e50"
+	promoID  = "43e35910-c168-4634-ad4f-52fd764a843f"
+	keyCount = 4 // Example key count
 )
 
 type loginResponse struct {
@@ -143,33 +142,12 @@ func postRequestWithAuth(url string, body interface{}, token string) ([]byte, er
 	return io.ReadAll(resp.Body)
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "index.html")
-}
-
-func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	r.ParseForm()
-	keyCountStr := r.FormValue("keyCount")
-	keyCount, err := strconv.Atoi(keyCountStr)
-	if err != nil || keyCount <= 0 {
-		http.Error(w, "Invalid keyCount parameter", http.StatusBadRequest)
-		return
-	}
-
+func main() {
 	var wg sync.WaitGroup
-	keys := make([]string, 0, keyCount)
-	durations := make([]string, 0, keyCount)
-
+	log.Printf("Старт приложения\n")
+	log.Printf("Запускаем %d горутин\n", keyCount)
 	for i := 0; i < keyCount; i++ {
 		wg.Add(1)
-
-		log.Printf("Старт приложения\n")
-		log.Printf("Запуск горутин. Количество: %d\n", keyCount)
 
 		go func(i int) {
 			defer wg.Done()
@@ -179,94 +157,37 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			clientID := generateClientID()
 			clientToken, err := login(clientID)
 			if err != nil {
-				log.Printf("Login failed: %v", err)
-				return
+				log.Fatalf("Login failed: %v", err)
 			}
 
 			hasCode := false
-			count := 0
 
 			for !hasCode {
-				count++
 				time.Sleep(2 * time.Second)
 
 				hasCode, err := emulateProgress(clientToken)
 				if err != nil {
-					log.Printf("Emulate progress failed: %v", err)
-					return
+					log.Fatalf("Emulate progress failed: %v", err)
 				}
 				if hasCode {
 					break
 				}
 				duration := time.Since(startTime)
-				log.Printf("горутина %d работает %s\n", i+1, duration)
+				log.Printf("горутин %d работает %s\n", i+1, duration)
 			}
 
 			promoCode, err := generateKey(clientToken)
 			if err != nil {
-				log.Printf("Generate key failed: %v", err)
+				log.Fatalf("Generate key failed: %v", err)
 				return
 			}
-
+			fmt.Printf("Generated key: %s\n", promoCode)
 			duration := time.Since(startTime)
-			keys = append(keys, fmt.Sprintf("%s", promoCode))
-			durations = append(durations, fmt.Sprintf("Key %d: %v", i+1, duration))
-
+			fmt.Printf("Time taken for key %d: %v\n", i+1, duration)
 		}(i)
 
 	}
 
 	wg.Wait()
-
-	pageData := struct {
-		Keys      []string
-		Durations []string
-	}{
-		Keys:      keys,
-		Durations: durations,
-	}
-
-	tmpl := `
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-	    <meta charset="UTF-8">
-	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	    <title>Генерация кодов</title>
-	    <link rel="stylesheet" href="/static/css/styles.css">
-	</head>
-	<body>
-
-	{{if .Keys}}
-	<div id="keyContainer">
-	    <h2>Сгенерированные ключи:</h2>
-	    <ul>
-	        {{range .Keys}}
-	        <li>{{.}}</li>
-	        {{end}}
-	    </ul>
-	</div>
-	{{end}}
-
-	{{if .Durations}}
-	    <h3>Время генерации:</h3>
-	    <ul>
-	        {{range $index, $duration := .Durations}}
-	        <li>{{$duration}}</li>
-	        {{end}}
-	    </ul>
-	{{end}}
-	</body>
-	</html>`
-
-	t := template.Must(template.New("result").Parse(tmpl))
-	t.Execute(w, pageData)
 }
-func main() {
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/generate_keys", generateKeysHandler)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static")))) // Serve static files
-
-	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
+*/
