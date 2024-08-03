@@ -13,10 +13,9 @@ import (
 )
 
 const (
-	appToken    = "d28721be-fd2d-4b45-869e-9f253b554e50"
-	promoID     = "43e35910-c168-4634-ad4f-52fd764a843f"
-	eventsDelay = 20000 // in milliseconds
-	keyCount    = 4     // Example key count
+	appToken = "d28721be-fd2d-4b45-869e-9f253b554e50"
+	promoID  = "43e35910-c168-4634-ad4f-52fd764a843f"
+	keyCount = 4 // Example key count
 )
 
 type loginResponse struct {
@@ -144,7 +143,8 @@ func postRequestWithAuth(url string, body interface{}, token string) ([]byte, er
 
 func main() {
 	var wg sync.WaitGroup
-
+	log.Printf("Старт приложения\n")
+	log.Printf("Запускаем %d горутин\n", keyCount)
 	for i := 0; i < keyCount; i++ {
 		wg.Add(1)
 
@@ -160,22 +160,20 @@ func main() {
 			}
 
 			hasCode := false
-			count := 0
 
 			for !hasCode {
-				count++
 				time.Sleep(2 * time.Second)
 
 				hasCode, err := emulateProgress(clientToken)
-				fmt.Println("hasCode: ", hasCode)
 				if err != nil {
 					log.Fatalf("Emulate progress failed: %v", err)
 				}
 				if hasCode {
 					break
 				}
+				duration := time.Since(startTime)
+				log.Printf("горутин %d работает %s\n", i+1, duration)
 			}
-			fmt.Println(count)
 
 			promoCode, err := generateKey(clientToken)
 			if err != nil {
@@ -183,9 +181,8 @@ func main() {
 				return
 			}
 			fmt.Printf("Generated key: %s\n", promoCode)
-			duration := time.Since(startTime) // Вычисляем время выполнения
+			duration := time.Since(startTime)
 			fmt.Printf("Time taken for key %d: %v\n", i+1, duration)
-
 		}(i)
 
 	}
