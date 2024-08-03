@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -142,33 +143,52 @@ func postRequestWithAuth(url string, body interface{}, token string) ([]byte, er
 }
 
 func main() {
+	var wg sync.WaitGroup
+
 	for i := 0; i < keyCount; i++ {
-		clientID := generateClientID()
-		clientToken, err := login(clientID)
-		if err != nil {
-			log.Fatalf("Login failed: %v", err)
-		}
+		wg.Add(1)
 
-		for j := 0; j < 7; j++ {
-			//time.Sleep(time.Duration(eventsDelay*delayRandom()) * time.Millisecond)
-			time.Sleep(time.Duration(eventsDelay*delayRandom()) * time.Millisecond)
-			hasCode, err := emulateProgress(clientToken)
+		go func(i int) {
+			defer wg.Done()
+
+			startTime := time.Now()
+
+			clientID := generateClientID()
+			clientToken, err := login(clientID)
 			if err != nil {
-				log.Fatalf("Emulate progress failed: %v", err)
+				log.Fatalf("Login failed: %v", err)
 			}
-			if hasCode {
-				break
-			}
-		}
 
-		promoCode, err := generateKey(clientToken)
-		if err != nil {
-			log.Fatalf("Generate key failed: %v", err)
-		}
-		fmt.Printf("Generated key: %s\n", promoCode)
+			hasCode := false
+			count := 0
+
+			for !hasCode {
+				count++
+				time.Sleep(2 * time.Second)
+
+				hasCode, err := emulateProgress(clientToken)
+				fmt.Println("hasCode: ", hasCode)
+				if err != nil {
+					log.Fatalf("Emulate progress failed: %v", err)
+				}
+				if hasCode {
+					break
+				}
+			}
+			fmt.Println(count)
+
+			promoCode, err := generateKey(clientToken)
+			if err != nil {
+				log.Fatalf("Generate key failed: %v", err)
+				return
+			}
+			fmt.Printf("Generated key: %s\n", promoCode)
+			duration := time.Since(startTime) // Вычисляем время выполнения
+			fmt.Printf("Time taken for key %d: %v\n", i+1, duration)
+
+		}(i)
+
 	}
-}
 
-func delayRandom() float64 {
-	return rand.Float64()/3 + 1
+	wg.Wait()
 }
