@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -166,80 +168,129 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Создаем контекст с таймаутом в 3 минуты
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	// Канал для уведомления о завершении работы
+	done := make(chan struct{})
+
 	var wg sync.WaitGroup
 	keys := make([]string, 0, keyCount)
 	startTime := time.Now()
+	log.Printf("Запуск горутин. Количество: %d\n", keyCount)
+
 	for i := 0; i < keyCount; i++ {
 		wg.Add(1)
-
-		log.Printf("Запуск горутин. Количество: %d\n", keyCount)
 
 		go func(i int) {
 			defer wg.Done()
 
-			startTimeGo := time.Now()
-
-			clientID := generateClientID()
-			clientToken, err := login(clientID)
-			if err != nil {
-				log.Printf("Login failed: %v", err)
+			// Используем контекст внутри горутины
+			select {
+			case <-ctx.Done():
+				log.Printf("Горутина %d завершена из-за таймаута\n", i+1)
 				return
-			}
+			default:
+				// Продолжаем работу горутины
+				startTimeGo := time.Now()
 
-			hasCode := false
-
-			for !hasCode {
-				time.Sleep(2 * time.Second)
-
-				hasCode, err := emulateProgress(clientToken)
+				clientID := generateClientID()
+				clientToken, err := login(clientID)
 				if err != nil {
-					log.Printf("Emulate progress failed: %v", err)
+					log.Printf("Login failed: %v", err)
 					return
 				}
-				if hasCode {
-					break
-				}
-				duration := time.Since(startTimeGo)
-				log.Printf("горутина %d работает %s\n", i+1, duration)
-			}
 
-			promoCode, err := generateKey(clientToken)
+				hasCode := false
+
+				for !hasCode {
+					select {
+					case <-ctx.Done():
+						log.Printf("Горутина %d завершена из-за таймаута\n", i+1)
+						return
+					default:
+						time.Sleep(2 * time.Second)
+
+						hasCode, err := emulateProgress(clientToken)
+						if err != nil {
+							log.Printf("Emulate progress failed: %v", err)
+							return
+						}
+						if hasCode {
+							break
+						}
+						duration := time.Since(startTimeGo)
+						log.Printf("Горутина %d работает %s\n", i+1, duration)
+					}
+				}
+
+				promoCode, err := generateKey(clientToken)
+				if err != nil {
+					log.Printf("Generate key failed: %v", err)
+					return
+				}
+
+				// Добавляем сгенерированный код в общий список
+				keys = append(keys, fmt.Sprintf("%s", promoCode))
+			}
+		}(i)
+	}
+
+	go func() {
+		wg.Wait()
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-ctx.Done():
+		// Если контекст отменен, перенаправляем на главную страницу
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	case <-done:
+		// Если все горутины завершены до истечения таймаута, показываем результат
+		duration := time.Since(startTime)
+		log.Printf("Горутины отработали за %s \n", duration)
+
+		// Записываем сгенерированные коды в файл
+		file, err := os.Create("data/code.txt")
+		if err != nil {
+			http.Error(w, "Unable to create file", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		for _, key := range keys {
+			_, err := file.WriteString(key + "\n")
 			if err != nil {
-				log.Printf("Generate key failed: %v", err)
+				http.Error(w, "Unable to write to file", http.StatusInternalServerError)
 				return
 			}
+		}
 
-			keys = append(keys, fmt.Sprintf("%s", promoCode))
+		// Читаем HTML-шаблон из файла
+		tmplPath := "static/results.html"
+		tmpl, err := template.ParseFiles(tmplPath)
+		if err != nil {
+			http.Error(w, "Unable to parse template", http.StatusInternalServerError)
+			return
+		}
 
-		}(i)
+		// Выполняем шаблон и передаем данные
+		pageData := struct {
+			Keys []string
+		}{
+			Keys: keys,
+		}
 
-	}
-
-	wg.Wait()
-	duration := time.Since(startTime)
-	log.Printf("Горутины отработали за %s \n", duration)
-
-	// Читаем HTML-шаблон из файла
-	tmplPath := "static/results.html"
-	tmpl, err := template.ParseFiles(tmplPath)
-	if err != nil {
-		http.Error(w, "Unable to parse template", http.StatusInternalServerError)
-		return
-	}
-
-	// Выполняем шаблон и передаем данные
-	pageData := struct {
-		Keys []string
-	}{
-		Keys: keys,
-	}
-
-	err = tmpl.Execute(w, pageData)
-	if err != nil {
-		http.Error(w, "Unable to execute template", http.StatusInternalServerError)
-		return
+		err = tmpl.Execute(w, pageData)
+		if err != nil {
+			http.Error(w, "Unable to execute template", http.StatusInternalServerError)
+			return
+		}
 	}
 }
+
 func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/generate_keys", generateKeysHandler)
