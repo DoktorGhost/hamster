@@ -15,8 +15,18 @@ import (
 )
 
 const (
-	appToken = "d28721be-fd2d-4b45-869e-9f253b554e50"
-	promoID  = "43e35910-c168-4634-ad4f-52fd764a843f"
+	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //bike
+	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //bike
+
+	appToken = "d1690a07-3780-4068-810f-9b5bbf2931b2" // Chain Cube
+	promoID  = "b4170868-cef0-424f-8eb9-be0622e8e8e3" // Chain Cube
+
+	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //My Clone Army
+	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //My Clone Army
+
+	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //Train Miner
+	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //Train Miner
+
 )
 
 type loginResponse struct {
