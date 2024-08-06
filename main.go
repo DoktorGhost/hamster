@@ -15,17 +15,17 @@ import (
 )
 
 const (
-	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //bike
-	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //bike
+	appToken1 = "d28721be-fd2d-4b45-869e-9f253b554e50" //Riding Extreme 3D
+	promoID1  = "43e35910-c168-4634-ad4f-52fd764a843f" //Riding Extreme 3D
 
-	appToken = "d1690a07-3780-4068-810f-9b5bbf2931b2" // Chain Cube
-	promoID  = "b4170868-cef0-424f-8eb9-be0622e8e8e3" // Chain Cube
+	appToken2 = "d1690a07-3780-4068-810f-9b5bbf2931b2" // Chain Cube
+	promoID2  = "b4170868-cef0-424f-8eb9-be0622e8e8e3" // Chain Cube
 
-	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //My Clone Army
-	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //My Clone Army
+	appToken3 = "74ee0b5b-775e-4bee-974f-63e7f4d5bacb" //My Clone Army
+	promoID3  = "fe693b26-b342-4159-8808-15e3ff7f8767" //My Clone Army
 
-	//appToken = "d28721be-fd2d-4b45-869e-9f253b554e50" //Train Miner
-	//promoID  = "43e35910-c168-4634-ad4f-52fd764a843f" //Train Miner
+	appToken4 = "82647f43-3f87-402d-88dd-09a90025313f" //Train Miner
+	promoID4  = "c4480ac7-e178-4973-8061-9ed5b2e17954" //Train Miner
 
 )
 
@@ -58,7 +58,7 @@ func randSeq(n int) string {
 }
 
 // апи
-func login(clientID string) (string, error) {
+func login(clientID, appToken string) (string, error) {
 	url := "https://api.gamepromo.io/promo/login-client"
 	body := map[string]interface{}{
 		"appToken":     appToken,
@@ -78,7 +78,7 @@ func login(clientID string) (string, error) {
 	return loginResp.ClientToken, nil
 }
 
-func emulateProgress(clientToken string) (bool, error) {
+func emulateProgress(clientToken, promoID string) (bool, error) {
 	url := "https://api.gamepromo.io/promo/register-event"
 	body := map[string]interface{}{
 		"promoId":     promoID,
@@ -99,7 +99,7 @@ func emulateProgress(clientToken string) (bool, error) {
 }
 
 // апи
-func generateKey(clientToken string) (string, error) {
+func generateKey(clientToken, promoID string) (string, error) {
 	url := "https://api.gamepromo.io/promo/create-code"
 	body := map[string]interface{}{
 		"promoId": promoID,
@@ -176,10 +176,18 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if keyCount > 10 {
+		return
+	}
+
 	var wg sync.WaitGroup
-	keys := make([]string, 0, keyCount)
+	keys1 := make([]string, 0, keyCount)
+	keys2 := make([]string, 0, keyCount)
+	keys3 := make([]string, 0, keyCount)
+	keys4 := make([]string, 0, keyCount)
 	startTime := time.Now()
-	log.Printf("Запуск горутин. Количество: %d\n", keyCount)
+	//log.Printf("Запуск горутин. Количество: %d\n", keyCount*4)
+
 	for i := 0; i < keyCount; i++ {
 		wg.Add(1)
 
@@ -189,7 +197,7 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			startTimeGo := time.Now()
 
 			clientID := generateClientID()
-			clientToken, err := login(clientID)
+			clientToken, err := login(clientID, appToken1)
 			if err != nil {
 				log.Printf("Login failed: %v", err)
 				return
@@ -200,7 +208,7 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			for !hasCode {
 				time.Sleep(2 * time.Second)
 
-				hasCode, err := emulateProgress(clientToken)
+				hasCode, err := emulateProgress(clientToken, promoID1)
 				if err != nil {
 					log.Printf("Emulate progress failed: %v", err)
 					return
@@ -209,16 +217,148 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				duration := time.Since(startTimeGo)
-				log.Printf("горутина %d работает %s\n", i+1, duration)
+				log.Printf("горутина appToken1-%d работает %s\n", i+1, duration)
 			}
 
-			promoCode, err := generateKey(clientToken)
+			promoCode, err := generateKey(clientToken, promoID1)
 			if err != nil {
 				log.Printf("Generate key failed: %v", err)
 				return
 			}
 
-			keys = append(keys, fmt.Sprintf("%s", promoCode))
+			keys1 = append(keys1, fmt.Sprintf("%s", promoCode))
+
+		}(i)
+
+	}
+
+	for i := 0; i < keyCount; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			startTimeGo := time.Now()
+
+			clientID := generateClientID()
+			clientToken, err := login(clientID, appToken2)
+			if err != nil {
+				log.Printf("Login failed: %v", err)
+				return
+			}
+
+			hasCode := false
+
+			for !hasCode {
+				time.Sleep(10 * time.Second)
+
+				hasCode, err := emulateProgress(clientToken, promoID2)
+				if err != nil {
+					log.Printf("Emulate progress failed: %v", err)
+					return
+				}
+				if hasCode {
+					break
+				}
+				duration := time.Since(startTimeGo)
+				log.Printf("горутина appToken2-%d работает %s\n", i+1, duration)
+			}
+
+			promoCode, err := generateKey(clientToken, promoID2)
+			if err != nil {
+				log.Printf("Generate key failed: %v", err)
+				return
+			}
+
+			keys2 = append(keys2, fmt.Sprintf("%s", promoCode))
+
+		}(i)
+
+	}
+
+	for i := 0; i < keyCount; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			startTimeGo := time.Now()
+
+			clientID := generateClientID()
+			clientToken, err := login(clientID, appToken3)
+			if err != nil {
+				log.Printf("Login failed: %v", err)
+				return
+			}
+
+			hasCode := false
+
+			for !hasCode {
+				time.Sleep(2 * time.Second)
+
+				hasCode, err := emulateProgress(clientToken, promoID3)
+				if err != nil {
+					log.Printf("Emulate progress failed: %v", err)
+					return
+				}
+				if hasCode {
+					break
+				}
+				duration := time.Since(startTimeGo)
+				log.Printf("горутина appToken3-%d работает %s\n", i+1, duration)
+			}
+
+			promoCode, err := generateKey(clientToken, promoID3)
+			if err != nil {
+				log.Printf("Generate key failed: %v", err)
+				return
+			}
+
+			keys3 = append(keys3, fmt.Sprintf("%s", promoCode))
+
+		}(i)
+
+	}
+
+	for i := 0; i < keyCount; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			startTimeGo := time.Now()
+
+			clientID := generateClientID()
+			clientToken, err := login(clientID, appToken4)
+			if err != nil {
+				log.Printf("Login failed: %v", err)
+				return
+			}
+
+			hasCode := false
+
+			for !hasCode {
+				time.Sleep(2 * time.Second)
+
+				hasCode, err := emulateProgress(clientToken, promoID4)
+				if err != nil {
+					log.Printf("Emulate progress failed: %v", err)
+					return
+				}
+				if hasCode {
+					break
+				}
+				duration := time.Since(startTimeGo)
+				log.Printf("горутина appToken4-%d работает %s\n", i+1, duration)
+			}
+
+			promoCode, err := generateKey(clientToken, promoID4)
+			if err != nil {
+				log.Printf("Generate key failed: %v", err)
+				return
+			}
+
+			keys4 = append(keys4, fmt.Sprintf("%s", promoCode))
 
 		}(i)
 
@@ -238,9 +378,15 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Выполняем шаблон и передаем данные
 	pageData := struct {
-		Keys []string
+		Keys1 []string
+		Keys2 []string
+		Keys3 []string
+		Keys4 []string
 	}{
-		Keys: keys,
+		Keys1: keys1,
+		Keys2: keys2,
+		Keys3: keys3,
+		Keys4: keys4,
 	}
 
 	err = tmpl.Execute(w, pageData)

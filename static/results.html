@@ -8,11 +8,44 @@
 </head>
 <body>
 
-{{if .Keys}}
-<div id="keyContainer">
-    <h2>Сгенерированные ключи:</h2>
+{{if .Keys1}}
+<div id="keyContainer1">
+    <h2>Riding Extreme 3D:</h2>
     <ul>
-        {{range .Keys}}
+        {{range .Keys1}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+</div>
+{{end}}
+
+{{if .Keys2}}
+<div id="keyContainer2">
+    <h2>Chain Cube:</h2>
+    <ul>
+        {{range .Keys2}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+</div>
+{{end}}
+
+{{if .Keys3}}
+<div id="keyContainer3">
+    <h2>My Clone Army:</h2>
+    <ul>
+        {{range .Keys3}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+</div>
+{{end}}
+
+{{if .Keys4}}
+<div id="keyContainer4">
+    <h2>Train Miner:</h2>
+    <ul>
+        {{range .Keys4}}
         <li>{{.}}</li>
         {{end}}
     </ul>
