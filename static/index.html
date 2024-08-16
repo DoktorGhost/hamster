@@ -62,19 +62,12 @@
 
 <script>
     document.getElementById('keyForm').addEventListener('submit', function (event) {
-          // Останавливаем стандартное поведение формы (отправка)
 
-        // Скрываем меню
         document.getElementById('menuContainer').style.display = 'none';
-        // Показываем анимацию загрузки
         document.getElementById('loadingContainer').style.display = 'block';
 
-
-        // Получаем значение таймаута
         const timeOutValue = parseInt(document.getElementById('time_out').value);
 
-
-        // Инициализируем и запускаем таймер
         setupTimerUI(timeOutValue);
         startTimer(timeOutValue);
     });
