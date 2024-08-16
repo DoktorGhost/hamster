@@ -8,49 +8,23 @@
 </head>
 <body>
 
-{{if .Keys1}}
-<div id="keyContainer1">
-    <h2>Riding Extreme 3D:</h2>
-    <ul>
-        {{range .Keys1}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+<div class="button-container">
+    <button type="button" onclick="window.location.href='/'">Вернуться на главную</button>
 </div>
-{{end}}
 
-{{if .Keys2}}
-<div id="keyContainer2">
-    <h2>Chain Cube:</h2>
-    <ul>
-        {{range .Keys2}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+<div class="container">
+{{range $i, $keys := .KeySets}}
+<div id="keyContainer">
+    <h2>{{with $token := index $.MapToken $i}}{{$token.GameName}}{{end}}</h2>
+<ul>
+    {{range $keys}}
+    <li>{{.}}</li>
+    {{end}}
+</ul>
 </div>
 {{end}}
+</div>
 
-{{if .Keys3}}
-<div id="keyContainer3">
-    <h2>My Clone Army:</h2>
-    <ul>
-        {{range .Keys3}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
-</div>
-{{end}}
-
-{{if .Keys4}}
-<div id="keyContainer4">
-    <h2>Train Miner:</h2>
-    <ul>
-        {{range .Keys4}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
-</div>
-{{end}}
 
 </body>
 </html>

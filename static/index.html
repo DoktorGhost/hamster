@@ -5,12 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Генерация кодов</title>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/loading.css"> <!-- Подключение нового CSS-файла -->
 </head>
 <body>
 
+<div id="menuContainer">
 <h1>Генерация кодов</h1>
+<div class="container">
 <form id="keyForm" action="/generate_keys" method="post">
+    <div class="container1">
+        <label for="keyCount">Название игры:</label>
+        <select id="gameName" name="gameName">
+            <option value="99">Все игры</option>
+            <option value="0">Riding Extreme 3D</option>
+            <option value="1">Chain Cube</option>
+            <option value="2">My Clone Army</option>
+            <option value="3">Train Miner</option>
+            <option value="4">Merge Away</option>
+            <option value="5">Twerk Race</option>
+        </select>
+    </div>
     <div class="container1">
         <label for="keyCount">Количество ключей:</label>
         <select id="keyCount" name="keyCount">
@@ -20,20 +33,52 @@
             <option value="4">4</option>
         </select>
     </div>
+    <div class="container1">
+        <label for="keyCount">Таймаут:</label>
+        <select id="time_out" name="time_out">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+        </select>
+    </div>
+    <p>Если генерируются не все ключи - увеличь время таймаута.</p>
     <button type="submit">Начать</button>
 </form>
+</div>
+</div>
 
 <!-- Контейнер для анимации загрузки -->
 <div id="loadingContainer">
-    <div class="loader"></div>
-    <p>Идет генерация ключей. Пожалуйста, подождите...</p>
+    <div class="container">
+        <div id="app"></div>
+        <div class="container1">
+            <p>Идет генерация ключей. Пожалуйста, подождите...</p>
+        </div>
+    </div>
 </div>
 
+<script src="/static/js/script.js"></script>
+
 <script>
-    document.getElementById('keyForm').addEventListener('submit', function () {
+    document.getElementById('keyForm').addEventListener('submit', function (event) {
+          // Останавливаем стандартное поведение формы (отправка)
+
+        // Скрываем меню
+        document.getElementById('menuContainer').style.display = 'none';
         // Показываем анимацию загрузки
         document.getElementById('loadingContainer').style.display = 'block';
+
+
+        // Получаем значение таймаута
+        const timeOutValue = parseInt(document.getElementById('time_out').value);
+
+
+        // Инициализируем и запускаем таймер
+        setupTimerUI(timeOutValue);
+        startTimer(timeOutValue);
     });
 </script>
+
 </body>
 </html>
