@@ -1,7 +1,7 @@
 package conf
 
 // при добвлении новой игры CountGames++, в MapToken добавляем данные новой игры
-const CountGames = 6
+const CountGames = 7
 
 var MapToken = map[int]Token{
 	0: {"Riding Extreme 3D", "d28721be-fd2d-4b45-869e-9f253b554e50", "43e35910-c168-4634-ad4f-52fd764a843f"},

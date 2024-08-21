@@ -13,9 +13,9 @@
 </div>
 
 <div class="container">
-{{range $i, $keys := .KeySets}}
+{{range $gameName, $keys := .KeySets}}
 <div id="keyContainer">
-    <h2>{{with $token := index $.MapToken $i}}{{$token.GameName}}{{end}}</h2>
+    <h2>{{$gameName}}</h2>
 <ul>
     {{range $keys}}
     <li>{{.}}</li>

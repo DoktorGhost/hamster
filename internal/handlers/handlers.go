@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"ham/internal/api"
 	"ham/internal/conf"
 	"ham/internal/useCase"
@@ -53,7 +52,7 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if keyCount > 10 || timeOut < 5 || timeOut > 20 {
+	if keyCount > 4 || timeOut < 5 || timeOut > 20 {
 		return
 	}
 
@@ -71,11 +70,8 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 		gName = conf.MapToken[gameName].GameName
 	}
 
-	keySlices := make([][]string, n)
-
-	for i := 0; i < n; i++ {
-		keySlices[i] = make([]string, 0, keyCount)
-	}
+	//keySlices := make([][]string, n)
+	mapKeySlice := make(map[string][]string, n)
 
 	startTime := time.Now()
 
@@ -85,12 +81,18 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			promoID = conf.MapToken[i].PromoID
 			gName = conf.MapToken[i].GameName
 		}
-		keyGen(keyCount, &wg, gName, appToken, promoID, timeOut, &keySlices[i])
+
+		keySlices := make([]string, keyCount, keyCount)
+
+		keyGen(keyCount, &wg, gName, appToken, promoID, timeOut, &keySlices)
+		mapKeySlice[gName] = keySlices
+
 	}
 
 	wg.Wait()
 	duration := time.Since(startTime)
 	log.Printf("Горутины отработали за %s \n", duration)
+	log.Println(mapKeySlice)
 
 	// Читаем HTML-шаблон из файла
 	tmplPath := "static/results.html"
@@ -102,11 +104,9 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Выполняем шаблон и передаем данные
 	pageData := struct {
-		KeySets  [][]string
-		MapToken map[int]conf.Token
+		KeySets map[string][]string
 	}{
-		KeySets:  keySlices,
-		MapToken: conf.MapToken,
+		KeySets: mapKeySlice,
 	}
 
 	err = tmpl.Execute(w, pageData)
@@ -144,11 +144,11 @@ func keyGen(keyCount int, wg *sync.WaitGroup, gameName string, appToken, promoID
 				duration := time.Since(startTimeGo)
 
 				if duration > time.Duration(timeOut)*time.Minute {
-					log.Printf("Горутина appToken-%s(%d) завершена из-за превышения времени выполнения", gameName, i+1)
+					log.Printf("Горутина %s-%d завершена из-за превышения времени выполнения", gameName, i+1)
 					return
 				}
 
-				log.Printf("горутина appToken-%s(%d) работает %s\n", gameName, i+1, duration)
+				log.Printf("горутина %s-%d работает %s\n", gameName, i+1, duration)
 
 				randomDelay := rand.Intn(11) + 10
 
@@ -161,7 +161,7 @@ func keyGen(keyCount int, wg *sync.WaitGroup, gameName string, appToken, promoID
 				return
 			}
 
-			*arr = append(*arr, fmt.Sprintf("%s", promoCode))
+			(*arr)[i] = promoCode
 
 		}(i)
 
