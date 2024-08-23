@@ -16,7 +16,7 @@ import (
 func InitRout() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/generate_keys", generateKeysHandler)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,6 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 		gName = conf.MapToken[gameName].GameName
 	}
 
-	//keySlices := make([][]string, n)
 	mapKeySlice := make(map[string][]string, n)
 
 	startTime := time.Now()
