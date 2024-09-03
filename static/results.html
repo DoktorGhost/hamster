@@ -18,13 +18,26 @@
     <h2>{{$gameName}}</h2>
 <ul>
     {{range $keys}}
-    <li>{{.}}</li>
+    <li>
+        <input type="text" class="copy-input" value="{{.}}" onclick="copyToClipboard(this)" readonly>
+    </li>
     {{end}}
 </ul>
 </div>
 {{end}}
 </div>
 
+<script>
+    function copyToClipboard(element) {
+        element.select();
+        element.setSelectionRange(0, 99999); // Для мобильных устройств
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Ошибка при копировании текста: ', err);
+        }
+    }
+</script>
 
 </body>
 </html>

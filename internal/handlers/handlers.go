@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"ham/internal/api"
 	"ham/internal/conf"
 	"ham/internal/useCase"
@@ -9,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,6 +19,7 @@ func InitRout() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/generate_keys", generateKeysHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	http.HandleFunc("/test", testHandler)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -165,4 +168,67 @@ func keyGen(keyCount int, wg *sync.WaitGroup, gameName string, appToken, promoID
 		}(i)
 
 	}
+}
+
+// для тестов страницы результата
+func testHandler(w http.ResponseWriter, r *http.Request) {
+	mapKeySlice := make(map[string][]string, 4)
+	for i := 0; i < 4; i++ {
+
+		keySlices := make([]string, 4, 4)
+		for j := 0; j < 4; j++ {
+			key := testGenerateKey()
+			keySlices[j] = key
+		}
+
+		mapKeySlice[fmt.Sprintf("Game%d", i)] = keySlices
+
+	}
+
+	// Читаем HTML-шаблон из файла
+	tmplPath := "static/results.html"
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		http.Error(w, "Unable to parse template", http.StatusInternalServerError)
+		return
+	}
+
+	// Выполняем шаблон и передаем данные
+	pageData := struct {
+		KeySets map[string][]string
+	}{
+		KeySets: mapKeySlice,
+	}
+
+	err = tmpl.Execute(w, pageData)
+	if err != nil {
+		http.Error(w, "Unable to execute template", http.StatusInternalServerError)
+		return
+	}
+}
+
+func testGenerateKey() string {
+	// Определяем символы и числа для генерации ключа
+	letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits := "0123456789"
+
+	// Генерируем случайные сегменты
+	getRandomSegment := func(length int, chars string) string {
+		var sb strings.Builder
+		for i := 0; i < length; i++ {
+			sb.WriteByte(chars[rand.Intn(len(chars))])
+		}
+		return sb.String()
+	}
+
+	// Создаем ключ в формате GANGS-Z98-GY94-XDZ3-LHR
+	key := fmt.Sprintf(
+		"GANGS-%s-%s-%s-%s",
+		getRandomSegment(3, digits),
+		getRandomSegment(2, letters)+getRandomSegment(2, digits),
+		getRandomSegment(3, letters)+getRandomSegment(1, digits),
+		getRandomSegment(3, letters),
+	)
+
+	return key
 }
