@@ -83,7 +83,6 @@ func generateKeysHandler(w http.ResponseWriter, r *http.Request) {
 			promoID = conf.MapToken[i].PromoID
 			gName = conf.MapToken[i].GameName
 		}
-
 		keySlices := make([]string, keyCount, keyCount)
 
 		keyGen(keyCount, &wg, gName, appToken, promoID, timeOut, &keySlices)
