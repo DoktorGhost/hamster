@@ -1,7 +1,7 @@
 package conf
 
 // при добвлении новой игры CountGames++, в MapToken добавляем данные новой игры
-const CountGames = 12
+const CountGames = 14
 
 var MapToken = map[int]Token{
 	0:  {"Zoopolis", "b2436c89-e0aa-4aed-8046-9b0515e1c46b", "b2436c89-e0aa-4aed-8046-9b0515e1c46b"},
@@ -16,6 +16,8 @@ var MapToken = map[int]Token{
 	9:  {"Fluff Crusade", "112887b0-a8af-4eb2-ac63-d82df78283d9", "112887b0-a8af-4eb2-ac63-d82df78283d9"},
 	10: {"Bouncemasters", "bc72d3b9-8e91-4884-9c33-f72482f0db37", "bc72d3b9-8e91-4884-9c33-f72482f0db37"},
 	11: {"Hide Ball", "4bf4966c-4d22-439b-8ff2-dc5ebca1a600", "4bf4966c-4d22-439b-8ff2-dc5ebca1a600"},
+	12: {"Pin Out Master", "d2378baf-d617-417a-9d99-d685824335f0", "d2378baf-d617-417a-9d99-d685824335f0"},
+	13: {"Count Masters", "4bdc17da-2601-449b-948e-f8c7bd376553", "4bdc17da-2601-449b-948e-f8c7bd376553"},
 }
 
 type Token struct {
